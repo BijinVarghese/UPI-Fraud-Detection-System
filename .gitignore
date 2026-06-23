@@ -4,3 +4,5 @@ venv/
 *.pkl
 
 data/raw/creditcard.csv
+data/raw/
+data/processed/
