@@ -1,19 +1,35 @@
+import os
+import joblib
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.metrics import (
+    classification_report,
+    confusion_matrix,
+    accuracy_score
+)
+from imblearn.over_sampling import SMOTE
 
-# Load data
+# ==========================
+# Load Dataset
+# ==========================
 df = pd.read_csv("data/processed/upi_transactions_v2.csv")
+
+# Use a smaller sample for faster training
 df = df.sample(50000, random_state=42)
 
-# Features and target
-X = df.drop(columns=[
-    "Class",
-    "Transaction_ID",
-    "Device_ID"
-])
+# ==========================
+# Features and Target
+# ==========================
+X = df.drop(
+    columns=[
+        "Class",
+        "Transaction_ID",
+        "Device_ID"
+    ]
+)
 
+# Convert categorical columns into numbers
 X = pd.get_dummies(
     X,
     columns=[
@@ -25,24 +41,56 @@ X = pd.get_dummies(
 
 y = df["Class"]
 
-# Train-test split
+# ==========================
+# Split Data
+# ==========================
 X_train, X_test, y_train, y_test = train_test_split(
     X,
     y,
     test_size=0.2,
-    random_state=42
+    random_state=42,
+    stratify=y
 )
 
-# Model
+# ==========================
+# Handle Class Imbalance
+# ==========================
+smote = SMOTE(random_state=42)
+
+X_train, y_train = smote.fit_resample(
+    X_train,
+    y_train
+)
+
+print("\nAfter SMOTE:")
+print(y_train.value_counts())
+
+# ==========================
+# Train Model
+# ==========================
 model = RandomForestClassifier(
     n_estimators=100,
-    random_state=42
+    random_state=42,
+    n_jobs=-1
 )
 
 model.fit(X_train, y_train)
+# Create models folder if it doesn't exist
+os.makedirs("models", exist_ok=True)
 
-# Predictions
+# Save trained model
+joblib.dump(model, "models/random_forest_model.pkl")
+
+print("\nModel saved successfully!")
+# ==========================
+# Prediction
+# ==========================
 y_pred = model.predict(X_test)
+
+# ==========================
+# Evaluation
+# ==========================
+print("\nAccuracy:", accuracy_score(y_test, y_pred))
 
 print("\nConfusion Matrix:")
 print(confusion_matrix(y_test, y_pred))
