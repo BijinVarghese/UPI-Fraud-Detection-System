@@ -21,6 +21,9 @@ df = df.sample(50000, random_state=42)
 # ==========================
 # Features and Target
 # ==========================
+# ==========================
+# Features and Target
+# ==========================
 X = df.drop(
     columns=[
         "Class",
@@ -38,6 +41,9 @@ X = pd.get_dummies(
         "Merchant"
     ]
 )
+
+# Save feature names
+feature_names = X.columns.tolist()
 
 y = df["Class"]
 
@@ -76,10 +82,12 @@ model = RandomForestClassifier(
 
 model.fit(X_train, y_train)
 # Create models folder if it doesn't exist
+# Create models folder if it doesn't exist
 os.makedirs("models", exist_ok=True)
 
-# Save trained model
+# Save model and feature names
 joblib.dump(model, "models/random_forest_model.pkl")
+joblib.dump(feature_names, "models/feature_names.pkl")
 
 print("\nModel saved successfully!")
 # ==========================
